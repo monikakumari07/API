@@ -1,0 +1,29 @@
+
+from database import Base
+from sqlalchemy.orm import relationship
+from sqlalchemy import String,Boolean,Integer,Column,Text,Date,Float,ForeignKey
+
+class Movies(Base):
+    __tablename__ = 'movies'
+    id  = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255),nullable=False,unique=True)
+    release_date = Column(Date,nullable=True)
+
+    movies_details_id = Column(Integer, ForeignKey('movies_details_id'))
+
+    movies_details = relationship('Movies_details')
+
+    def __repr__(self):
+        return f"<Movies title={self.title} release_date={self.release_date}>"
+
+
+class Movies_details(Base):
+    __tablename__ = 'movies_details'
+    id = Column(Integer, primary_key=True)
+    slug = Column(String)
+    rating = Column(Float)
+    quality = Column(String)
+    description = Column(Text)
+    region = Column(String)
+    image = Column(String)
+    original_language = Column(String)
