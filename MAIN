@@ -1,0 +1,153 @@
+from datetime import date
+from fastapi import FastAPI,status,HTTPException
+from pydantic import BaseModel
+from typing import Optional,List
+from database import SessionLocal
+import models
+
+app=FastAPI()
+
+
+class Movies(BaseModel): #serializer
+    id:int
+    title:str
+    release_date:date
+
+    class Config:
+        orm_mode=True
+
+class Movies_details(BaseModel): #serializer
+    id:int
+    slug:str
+    rating:int
+    quality:str
+    description:str
+    region:str
+    image:str
+    original_language:str
+
+    class Config:
+        orm_mode=True
+
+
+db=SessionLocal()
+
+
+#GetAll the movies 
+@app.get('/movies',response_model=List[Movies],status_code=200)
+def get_all_movies_list():
+    movies_list=db.query(models.Movies).all()
+
+    return movies_list
+
+
+#Get the movies by id
+@app.get('/movies/{movies_id}',response_model=Movies,status_code=status.HTTP_200_OK)
+def get_an_movies(movies_id:int):
+    movies=db.query(models.Movies).filter(models.Movies.id==movies_id).first()
+    return movies
+
+
+#Create the movies 
+@app.post('/movies_create',response_model=Movies,
+        status_code=status.HTTP_201_CREATED)
+def create_an_movies_list(movie:Movies):
+    
+    new_obj=models.Movies(
+        title=movie.title,
+        release_date=movie.release_date
+    )
+
+    db_movie=db.query(models.Movies).filter(models.Movies.title==movie.title).first()
+
+    if db_movie is not None:
+        raise HTTPException(status_code=400,detail="Item already exists") 
+
+    db.add(new_obj)
+    db.commit()
+    return new_obj
+
+#Update the movies by id
+@app.put('/movies_update/{movies_id}',response_model=Movies,status_code=status.HTTP_200_OK)
+def update_an_movies(movies_id:int,movies:Movies):
+    movies_to_update=db.query(models.Movies).filter(models.Movies.id==movies_id).first()
+    movies_to_update.title=movies.title
+    movies_to_update.release_date=movies.release_date
+
+    db.commit()
+
+    return movies_to_update
+    
+#Delete the movies by id
+@app.delete('/movies_delete/{movies_id}')
+def delete_movies(movies_id:int):
+    movies_to_delete=db.query(models.Movies).filter(models.Movies.id==movies_id).first()
+
+    if movies_to_delete is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Resource Not Found")
+    
+    db.delete(movies_to_delete)
+    db.commit()
+
+    return movies_to_delete
+
+
+
+#Create the Movies details
+
+@app.post('/movies_details_create',response_model=Movies_details,
+        status_code=status.HTTP_201_CREATED)
+def create_an_movies_details(movie:Movies_details):
+    
+    new_obj1=models.Movies_details(
+        
+        slug=movie.slug,
+        rating=movie.rating,
+        quality=movie.quality,
+        description=movie.description,
+        region=movie.region,
+        image=movie.image,
+        original_language=movie.original_language
+
+    )
+    
+    db.add(new_obj1)
+    db.commit()
+    return new_obj1
+
+#Get the movies details by id
+
+@app.get('/movies_details/{movies_details_id}',response_model=Movies_details,status_code=status.HTTP_200_OK)
+def get_an_movie_details(movies_details_id:int):
+    movies_details=db.query(models.Movies_details).filter(models.Movies_details.id==movies_details_id).first()
+    return movies_details
+
+
+#Update the movies details by id
+@app.put('/movies_details_update/{movies_details_id}',response_model=Movies_details,status_code=status.HTTP_200_OK)
+def update_movies_details(movies_details_id:int,movies:Movies_details):
+    movies_details_update=db.query(models.Movies_details).filter(models.Movies_details.id==movies_details_id).first()
+    movies_details_update.slug=movies.slug
+    movies_details_update.rating=movies.rating
+    movies_details_update.quality=movies.quality
+    movies_details_update.description=movies.description
+    movies_details_update.region=movies.region
+    movies_details_update.image=movies.image
+    movies_details_update.original_language=movies.original_language
+
+    db.commit()
+
+    return movies_details_update
+
+#Delete the movies details by id
+@app.delete('/movies_details_delete/{movies_details_id}')
+def delete_movies_details(movies_details_id:int):
+    movies_details_delete=db.query(models.Movies_details).filter(models.Movies_details.id==movies_details_id).first()
+
+    if movies_details_delete is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Resource Not Found")
+    
+    db.delete(movies_details_delete)
+    db.commit()
+
+    return movies_details_delete
